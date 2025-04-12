@@ -34,8 +34,8 @@ loadstring(game:HttpGet(("https://raw.githubusercontent.com/daucobonhi/Ui-Redz-V
      
 ------- BUTTON
     
-    AddButton(Tab1o, {
-     Name = "MZ HUB",
+    AddButton(Tab1, {
+     Name = "REDZ HUB",
     Callback = function()
 	  local Settings = {
   JoinTeam = "Pirates"; -- Pirates/Marines
@@ -45,3 +45,13 @@ loadstring(game:HttpGet(("https://raw.githubusercontent.com/daucobonhi/Ui-Redz-V
 loadstring(game:HttpGet("https://raw.githubusercontent.com/realredz/BloxFruits/refs/heads/main/Source.lua"))(Settings)
   end
   })
+  
+  AddButton(Tab2 {
+     Name = "blue lock HUB",
+    Callback = function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/RedJDarks/MAIN/refs/heads/main/HitboxExpander"))()
+    
+    AddButton(Tab3, {
+     Name = "bloxf HUB",
+    Callback = function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/LuaCrack/Zis/refs/heads/main/ZisRb7"))()
