@@ -1,0 +1,142 @@
+-- MZ HUB - Orbit GUI (YETAHUB V4 Style)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HRP = Character:WaitForChild("HumanoidRootPart")
+
+-- Orbit variables
+local orbitEnabled = false
+local orbitTarget = nil
+local orbitRadius = 5
+local orbitSpeed = 50
+local angle = 0
+
+-- GUI setup
+local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+ScreenGui.Name = "OrbitGui"
+
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Position = UDim2.new(0.05, 0, 0.2, 0)
+Frame.Size = UDim2.new(0, 250, 0, 400)
+Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Frame.BorderSizePixel = 0
+Frame.ClipsDescendants = true
+Frame.BackgroundTransparency = 0.05
+Frame.Active = true
+Frame.Draggable = true
+
+local UIListLayout = Instance.new("UIListLayout", Frame)
+UIListLayout.Padding = UDim.new(0, 6)
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+local function createButton(text, callback)
+	local btn = Instance.new("TextButton", Frame)
+	btn.Size = UDim2.new(1, -10, 0, 35)
+	btn.Position = UDim2.new(0, 5, 0, 0)
+	btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	btn.BorderSizePixel = 0
+	btn.TextColor3 = Color3.new(1, 1, 1)
+	btn.Font = Enum.Font.SourceSansBold
+	btn.TextSize = 18
+	btn.Text = text
+	btn.MouseButton1Click:Connect(callback or function() end)
+	return btn
+end
+
+local function createLabel(text)
+	local label = Instance.new("TextLabel", Frame)
+	label.Size = UDim2.new(1, -10, 0, 25)
+	label.Position = UDim2.new(0, 5, 0, 0)
+	label.BackgroundTransparency = 1
+	label.TextColor3 = Color3.fromRGB(100, 200, 255)
+	label.Font = Enum.Font.SourceSansBold
+	label.TextSize = 18
+	label.Text = text
+	return label
+end
+
+local function createInput(labelText, defaultValue, onChanged)
+	local box = Instance.new("TextBox", Frame)
+	box.Size = UDim2.new(1, -10, 0, 30)
+	box.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	box.TextColor3 = Color3.new(1, 1, 1)
+	box.PlaceholderText = labelText
+	box.Text = tostring(defaultValue)
+	box.Font = Enum.Font.SourceSans
+	box.TextSize = 16
+	box.ClearTextOnFocus = false
+	box.FocusLost:Connect(function()
+		local val = tonumber(box.Text)
+		if val then
+			onChanged(val)
+		end
+	end)
+end
+
+-- GUI Elements
+createButton("ORBIT TARGET: OFF", function(self)
+	orbitEnabled = not orbitEnabled
+	self.Text = "ORBIT TARGET: " .. (orbitEnabled and "ON" or "OFF")
+
+	if orbitEnabled and orbitTarget then
+		RunService:UnbindFromRenderStep("OrbitTarget")
+		RunService:BindToRenderStep("OrbitTarget", Enum.RenderPriority.Character.Value, function(dt)
+			if not orbitEnabled or not orbitTarget or not orbitTarget.Character then
+				RunService:UnbindFromRenderStep("OrbitTarget")
+				return
+			end
+
+			local targetHRP = orbitTarget.Character:FindFirstChild("HumanoidRootPart")
+			if not targetHRP then return end
+
+			angle = angle + (orbitSpeed * dt / 100)
+			local x = math.cos(angle) * orbitRadius
+			local z = math.sin(angle) * orbitRadius
+			local y = HRP.Position.Y -- giữ nguyên chiều cao nhân vật
+			local newPos = Vector3.new(targetHRP.Position.X + x, y, targetHRP.Position.Z + z)
+			HRP.CFrame = CFrame.new(newPos, Vector3.new(targetHRP.Position.X, y, targetHRP.Position.Z))
+		end)
+	else
+		RunService:UnbindFromRenderStep("OrbitTarget")
+	end
+end)
+
+createLabel("Orbit Mode: NORMAL")
+
+createLabel("Orbit Radius")
+createInput("Choose Orbit Radius", orbitRadius, function(val)
+	orbitRadius = val
+end)
+
+createLabel("Orbit Speed")
+createInput("Choose Orbit Speed", orbitSpeed, function(val)
+	orbitSpeed = val
+end)
+
+createButton("CHOOSE PLAYER TARGET", function()
+	local players = {}
+	for _, p in pairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer then
+			table.insert(players, p.Name)
+		end
+	end
+
+	local chosen = nil
+	pcall(function()
+		chosen = StarterGui:PromptTextInput({
+			Title = "Chọn Player",
+			Text = "Nhập tên người chơi:",
+			PlaceholderText = table.concat(players, ", ")
+		})
+	end)
+
+	if chosen then
+		local found = Players:FindFirstChild(chosen)
+		if found then
+			orbitTarget = found
+		end
+	end
+end)
